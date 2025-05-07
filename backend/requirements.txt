@@ -1,0 +1,11 @@
+fastapi==0.103.1
+uvicorn==0.23.2
+python-multipart==0.0.6
+networkx==3.1
+shapely==2.0.1
+pydantic==2.3.0
+python-dotenv==1.0.0
+langchain==0.1.0
+langchain-openai==0.0.2
+langgraph==0.0.15
+openai>=1.6.1,<2.0.0 

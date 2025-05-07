@@ -1,0 +1,377 @@
+(venv) varunmehta@MacBookPro be-interview-project % python main.py --debug
+
+--- Running Predefined Assertions using Vacuum_PCB_OBjects.json (Debug Mode: True) ---
+Loaded 1821 objects (487 pads).
+
+Processing U1.11 <-> R66.1 on net M\C\L\R\ (16 objects)
+Trying strategy: build_accurate_graph
+No path found using build_accurate_graph.
+Trying strategy: build_bidirectional_graph
+Path found using build_bidirectional_graph (6 nodes): Length = 5.30688 mm
+Full Path Details:
+  1. Pad(U1.11, net=M\C\L\R\)
+  2. Track((851.96, 853.58)-(885.07, 853.58), L=33.12mils)
+  3. Track((814.96, 816.58)-(851.96, 853.58), L=52.32mils)
+  4. Track((814.96, 760.84)-(814.96, 816.58), L=55.74mils)
+  5. Track((767.05, 712.93)-(814.96, 760.84), L=67.75mils)
+  6. Pad(R66.1, net=M\C\L\R\)
+Final Result: Length=5.30688 mm using build_bidirectional_graph
+
+Processing U1.61 <-> C43.2 on net VBB (10 objects)
+Trying strategy: build_accurate_graph
+No path found using build_accurate_graph.
+Trying strategy: build_bidirectional_graph
+Path found using build_bidirectional_graph (6 nodes): Length = 5.90118 mm
+Full Path Details:
+  1. Pad(U1.61, net=VBB)
+  2. Track((972.44, 1078.74)-(972.44, 1110.15), L=31.41mils)
+  3. Track((946.85, 1135.74)-(972.44, 1110.15), L=36.19mils)
+  4. Track((946.85, 1135.74)-(946.85, 1242.41), L=106.66mils)
+  5. Track((946.85, 1242.41)-(987.91, 1283.46), L=58.06mils)
+  6. Pad(C43.2, net=VBB)
+Final Result: Length=5.90118 mm using build_bidirectional_graph
+
+Processing U1.20 <-> C3.2 on net AVDD (6 objects)
+Trying strategy: build_accurate_graph
+Path found using build_accurate_graph (4 nodes): Length = 2.10000 mm
+Full Path Details:
+  1. Pad(U1.20, net=AVDD)
+  2. Track((972.44, 717.52)-(972.44, 728.35), L=10.83mils)
+  3. Track((972.44, 645.67)-(972.44, 717.52), L=71.85mils)
+  4. Pad(C3.2, net=AVDD)
+Final Result: Length=2.10000 mm using build_accurate_graph
+
+Processing U1.20 <-> R2.1 on net AVDD (6 objects)
+Trying strategy: build_accurate_graph
+No path found using build_accurate_graph.
+Trying strategy: build_bidirectional_graph
+Path found using build_bidirectional_graph (6 nodes): Length = 4.00922 mm
+Full Path Details:
+  1. Pad(U1.20, net=AVDD)
+  2. Track((972.44, 717.52)-(972.44, 728.35), L=10.83mils)
+  3. Track((972.44, 645.67)-(972.44, 717.52), L=71.85mils)
+  4. Pad(C3.2, net=AVDD)
+  5. Track((972.44, 635.83)-(1025.59, 582.68), L=75.17mils)
+  6. Pad(R2.1, net=AVDD)
+Final Result: Length=4.00922 mm using build_bidirectional_graph
+
+Processing U1.9 <-> D5.2 on net NetC21_2 (10 objects)
+Trying strategy: build_accurate_graph
+Path found using build_accurate_graph (9 nodes): Length = 9.97167 mm
+Full Path Details:
+  1. Pad(U1.9, net=NetC21_2)
+  2. Track((841.25, 893.7)-(885.83, 893.7), L=44.58mils)
+  3. Track((769.68, 822.14)-(841.25, 893.7), L=101.20mils)
+  4. Track((769.68, 804.15)-(769.68, 822.14), L=17.99mils)
+  5. Track((739.16, 773.62)-(769.68, 804.15), L=43.17mils)
+  6. Track((643.7, 773.62)-(739.16, 773.62), L=95.46mils)
+  7. Track((620.83, 796.49)-(643.7, 773.62), L=32.34mils)
+  8. Track((562.99, 796.49)-(620.83, 796.49), L=57.84mils)
+  9. Pad(D5.2, net=NetC21_2)
+Final Result: Length=9.97167 mm using build_accurate_graph
+
+Processing R76.1 <-> U1.37 on net SW1 (29 objects)
+Trying strategy: build_accurate_graph
+Path found using build_accurate_graph (29 nodes): Length = 40.40481 mm
+Full Path Details:
+  1. Pad(R76.1, net=SW1)
+  2. Track((748.03, 1897.64)-(822.38, 1897.64), L=74.35mils)
+  3. Track((822.38, 1897.64)-(850.12, 1869.9), L=39.23mils)
+  4. Track((850.12, 1817.01)-(850.12, 1869.9), L=52.89mils)
+  5. Track((850.12, 1817.01)-(963.83, 1703.3), L=160.81mils)
+  6. Track((963.83, 1703.3)-(978.93, 1703.3), L=15.10mils)
+  7. Track((978.93, 1703.3)-(985.71, 1696.52), L=9.59mils)
+  8. Pad(SW1.1, net=SW1)
+  9. Track((985.71, 1657.89)-(985.71, 1696.52), L=38.63mils)
+  10. Track((985.71, 1657.89)-(1056, 1587.6), L=99.41mils)
+  11. Track((1056, 1587.6)-(1111.3, 1587.6), L=55.30mils)
+  12. Track((1111.3, 1587.6)-(1139.95, 1558.94), L=40.53mils)
+  13. Track((1139.95, 1477.21)-(1139.95, 1558.94), L=81.73mils)
+  14. Track((1139.95, 1477.21)-(1168.47, 1448.69), L=40.32mils)
+  15. Track((1168.47, 1448.69)-(1224.05, 1448.69), L=55.59mils)
+  16. Track((1224.05, 1448.69)-(1238.19, 1434.56), L=19.99mils)
+  17. Track((1238.19, 1420.98)-(1238.19, 1434.56), L=13.58mils)
+  18. Track((1238.19, 1420.98)-(1249.72, 1409.45), L=16.31mils)
+  19. Track((1249.72, 1409.45)-(1333.04, 1409.45), L=83.31mils)
+  20. Track((1333.04, 1409.45)-(1388.37, 1354.11), L=78.26mils)
+  21. Track((1388.37, 1058.47)-(1388.37, 1354.11), L=295.64mils)
+  22. Track((1319.4, 989.5)-(1388.37, 1058.47), L=97.54mils)
+  23. Track((1319.4, 860.92)-(1319.4, 989.5), L=128.58mils)
+  24. Track((1294.11, 835.63)-(1319.4, 860.92), L=35.77mils)
+  25. Track((1250.82, 835.63)-(1294.11, 835.63), L=43.29mils)
+  26. Track((1250.59, 835.4)-(1250.82, 835.63), L=0.33mils)
+  27. Track((1236.97, 835.4)-(1250.59, 835.4), L=13.61mils)
+  28. Track((1236.22, 834.64)-(1236.97, 835.4), L=1.07mils)
+  29. Pad(U1.37, net=SW1)
+Final Result: Length=40.40481 mm using build_accurate_graph
+
+Processing U1.4 <-> R54.2 on net VBOOT (23 objects)
+Trying strategy: build_accurate_graph
+Path found using build_accurate_graph (23 nodes): Length = 26.30932 mm
+Full Path Details:
+  1. Pad(U1.4, net=VBOOT)
+  2. Track((857.2, 992.13)-(885.83, 992.13), L=28.63mils)
+  3. Track((841.45, 1007.87)-(857.2, 992.13), L=22.27mils)
+  4. Track((830.21, 1007.87)-(841.45, 1007.87), L=11.24mils)
+  5. Track((804.79, 1033.29)-(830.21, 1007.87), L=35.94mils)
+  6. Track((804.79, 1033.29)-(804.79, 1061.85), L=28.56mils)
+  7. Track((781.5, 1085.15)-(804.79, 1061.85), L=32.95mils)
+  8. Track((781.5, 1085.15)-(781.5, 1096.59), L=11.44mils)
+  9. Pad(C28.1, net=VBOOT)
+  10. Track((781.5, 1096.59)-(786.03, 1101.12), L=6.41mils)
+  11. Track((786.03, 1101.12)-(786.03, 1258.51), L=157.39mils)
+  12. Track((712.6, 1331.94)-(786.03, 1258.51), L=103.84mils)
+  13. Track((712.6, 1331.94)-(712.6, 1641.77), L=309.83mils)
+  14. Track((712.6, 1641.77)-(716.53, 1645.7), L=5.57mils)
+  15. Pad(VBOOT.1, net=VBOOT)
+  16. Track((716.53, 1645.7)-(721.05, 1641.18), L=6.39mils)
+  17. Track((721.05, 1641.18)-(744.64, 1641.18), L=23.59mils)
+  18. Track((744.64, 1641.18)-(783.47, 1602.36), L=54.90mils)
+  19. Pad(R56.2, net=VBOOT)
+  20. Track((783.47, 1602.36)-(877.95, 1602.36), L=94.49mils)
+  21. Pad(R55.2, net=VBOOT)
+  22. Track((877.95, 1602.36)-(980.32, 1602.36), L=102.36mils)
+  23. Pad(R54.2, net=VBOOT)
+Final Result: Length=26.30932 mm using build_accurate_graph
+
+Processing R35.2 <-> Q6.4 on net NetC25_2 (11 objects)
+Trying strategy: build_accurate_graph
+No path found using build_accurate_graph.
+Trying strategy: build_bidirectional_graph
+Path found using build_bidirectional_graph (6 nodes): Length = 1.99214 mm
+Full Path Details:
+  1. Pad(R35.2, net=NetC25_2)
+  2. Track((1439.47, 693.55)-(1439.47, 727.69), L=34.15mils)
+  3. Via(loc=(1437.039, 730.123), net=NetC25_2)
+  4. Track((1422.87, 744.29)-(1437.04, 730.12), L=20.04mils)
+  5. Track((1398.62, 744.29)-(1422.87, 744.29), L=24.25mils)
+  6. Pad(Q6.4, net=NetC25_2)
+Final Result: Length=1.99214 mm using build_bidirectional_graph
+
+Processing R32.2 <-> Q6.4 on net NetC25_2 (11 objects)
+Trying strategy: build_accurate_graph
+Path found using build_accurate_graph (8 nodes): Length = 4.96668 mm
+Full Path Details:
+  1. Pad(R32.2, net=NetC25_2)
+  2. Track((1441.9, 580.88)-(1441.9, 691.12), L=110.24mils)
+  3. Track((1439.47, 693.55)-(1441.9, 691.12), L=3.44mils)
+  4. Track((1439.47, 693.55)-(1439.47, 727.69), L=34.15mils)
+  5. Track((1437.04, 730.12)-(1439.47, 727.69), L=3.44mils)
+  6. Track((1422.87, 744.29)-(1437.04, 730.12), L=20.04mils)
+  7. Track((1398.62, 744.29)-(1422.87, 744.29), L=24.25mils)
+  8. Pad(Q6.4, net=NetC25_2)
+Final Result: Length=4.96668 mm using build_accurate_graph
+
+Processing U1.22 <-> R17.1 on net OA3_IN- (18 objects)
+Trying strategy: build_accurate_graph
+Path found using build_accurate_graph (15 nodes): Length = 10.15659 mm
+Full Path Details:
+  1. Pad(U1.22, net=OA3_IN-)
+  2. Track((1011.81, 701.9)-(1011.81, 728.35), L=26.44mils)
+  3. Track((1004.75, 694.85)-(1011.81, 701.9), L=9.98mils)
+  4. Track((1004.75, 693.48)-(1004.75, 694.85), L=1.37mils)
+  5. Track((998.52, 687.25)-(1004.75, 693.48), L=8.81mils)
+  6. Track((998.52, 682.72)-(998.52, 687.25), L=4.53mils)
+  7. Track((998.52, 527.96)-(998.52, 682.72), L=154.76mils)
+  8. Track((972.44, 501.88)-(998.52, 527.96), L=36.89mils)
+  9. Track((972.44, 448.82)-(972.44, 501.88), L=53.06mils)
+  10. Pad(C13.2, net=OA3_IN-)
+  11. Track((972.44, 448.82)-(972.51, 448.75), L=0.09mils)
+  12. Track((972.51, 393.66)-(972.51, 448.75), L=55.09mils)
+  13. Pad(R15.2, net=OA3_IN-)
+  14. Track((972.51, 393.66)-(1021.36, 393.66), L=48.85mils)
+  15. Pad(R17.1, net=OA3_IN-)
+Final Result: Length=10.15659 mm using build_accurate_graph
+
+Processing U1.15 <-> C2.1 on net IA (15 objects)
+Trying strategy: build_accurate_graph
+Path found using build_accurate_graph (12 nodes): Length = 5.95187 mm
+Full Path Details:
+  1. Pad(U1.15, net=IA)
+  2. Track((885.07, 774.84)-(885.83, 775.59), L=1.07mils)
+  3. Track((863.69, 774.84)-(885.07, 774.84), L=21.38mils)
+  4. Track((854.33, 765.48)-(863.69, 774.84), L=13.24mils)
+  5. Track((854.33, 704.06)-(854.33, 765.48), L=61.42mils)
+  6. Track((823.5, 673.23)-(854.33, 704.06), L=43.61mils)
+  7. Pad(IA.1, net=IA)
+  8. Track((823.5, 673.23)-(823.5, 680.14), L=6.91mils)
+  9. Track((823.5, 680.14)-(850.89, 707.53), L=38.73mils)
+  10. Track((850.89, 707.53)-(850.89, 717.22), L=9.69mils)
+  11. Track((850.89, 717.22)-(877.95, 744.29), L=38.28mils)
+  12. Pad(C2.1, net=IA)
+Final Result: Length=5.95187 mm using build_accurate_graph
+
+Processing U1.19 <-> R15.1 on net IC (14 objects)
+Trying strategy: build_accurate_graph
+Path found using build_accurate_graph (14 nodes): Length = 9.66144 mm
+Full Path Details:
+  1. Pad(U1.19, net=IC)
+  2. Track((952.76, 682.98)-(952.76, 728.35), L=45.37mils)
+  3. Track((941.78, 672.0)-(952.76, 682.98), L=15.52mils)
+  4. Track((941.78, 594.25)-(941.78, 672.0), L=77.75mils)
+  5. Track((909.45, 561.92)-(941.78, 594.25), L=45.72mils)
+  6. Pad(IC.1, net=IC)
+  7. Track((909.45, 561.92)-(942.91, 528.45), L=47.33mils)
+  8. Track((942.91, 483.02)-(942.91, 528.45), L=45.44mils)
+  9. Track((909.45, 449.55)-(942.91, 483.02), L=47.33mils)
+  10. Track((909.45, 448.82)-(909.45, 449.55), L=0.74mils)
+  11. Pad(C13.1, net=IC)
+  12. Track((909.45, 448.82)-(909.52, 448.75), L=0.09mils)
+  13. Track((909.52, 393.66)-(909.52, 448.75), L=55.09mils)
+  14. Pad(R15.1, net=IC)
+Final Result: Length=9.66144 mm using build_accurate_graph
+
+Processing U1.47 <-> C38.2 on net HALL_B (22 objects)
+Trying strategy: build_accurate_graph
+Path found using build_accurate_graph (17 nodes): Length = 38.54961 mm
+Full Path Details:
+  1. Pad(U1.47, net=HALL_B)
+  2. Track((1236.22, 1031.5)-(1258.7, 1031.5), L=22.48mils)
+  3. Track((1258.7, 1031.5)-(1267.72, 1040.51), L=12.75mils)
+  4. Track((1267.72, 1040.51)-(1267.72, 1245.41), L=204.90mils)
+  5. Track((1267.72, 1245.41)-(1282.15, 1259.84), L=20.41mils)
+  6. Track((1240.99, 1218.68)-(1282.15, 1259.84), L=58.21mils)
+  7. Track((1129.54, 1218.68)-(1240.99, 1218.68), L=111.45mils)
+  8. Track((1065.11, 1283.11)-(1129.54, 1218.68), L=91.12mils)
+  9. Track((598.07, 1283.11)-(1065.11, 1283.11), L=467.04mils)
+  10. Track((330.71, 1015.75)-(598.07, 1283.11), L=378.11mils)
+  11. Track((330.71, 1011.81)-(330.71, 1015.75), L=3.94mils)
+  12. Pad(HALL_B.1, net=HALL_B)
+  13. Track((255.91, 1011.81)-(330.71, 1011.81), L=74.80mils)
+  14. Pad(D10.1, net=HALL_B)
+  15. Track((255.91, 944.88)-(255.91, 1011.81), L=66.93mils)
+  16. Track((255.91, 944.88)-(259.84, 940.95), L=5.57mils)
+  17. Pad(C38.2, net=HALL_B)
+Final Result: Length=38.54961 mm using build_accurate_graph
+
+Processing U1.6 <-> C26.1 on net VDD (139 objects)
+Trying strategy: build_accurate_graph
+Path found using build_accurate_graph (12 nodes): Length = 4.84104 mm
+Full Path Details:
+  1. Pad(U1.6, net=VDD)
+  2. Track((851.38, 952.76)-(885.83, 952.76), L=34.45mils)
+  3. Track((831.69, 972.44)-(851.38, 952.76), L=27.84mils)
+  4. Track((826.77, 972.44)-(831.69, 972.44), L=4.92mils)
+  5. Pad(VDD.1, net=VDD)
+  6. Track((826.77, 919.52)-(826.77, 972.44), L=52.92mils)
+  7. Track((826.77, 919.52)-(829.67, 916.63), L=4.09mils)
+  8. Pad(C33.2, net=VDD)
+  9. Track((783.14, 916.63)-(829.67, 916.63), L=46.52mils)
+  10. Track((771.56, 928.21)-(783.14, 916.63), L=16.39mils)
+  11. Track((771.56, 928.21)-(771.56, 931.67), L=3.46mils)
+  12. Pad(C26.1, net=VDD)
+Final Result: Length=4.84104 mm using build_accurate_graph
+
+Processing R2.1 <-> C3.2 on net AVDD (6 objects)
+Trying strategy: build_accurate_graph
+No path found using build_accurate_graph.
+Trying strategy: build_bidirectional_graph
+Path found using build_bidirectional_graph (3 nodes): Length = 1.90922 mm
+Full Path Details:
+  1. Pad(R2.1, net=AVDD)
+  2. Track((972.44, 635.83)-(1025.59, 582.68), L=75.17mils)
+  3. Pad(C3.2, net=AVDD)
+Final Result: Length=1.90922 mm using build_bidirectional_graph
+
+Processing U1.9 <-> C21.2 on net NetC21_2 (10 objects)
+Trying strategy: build_accurate_graph
+No path found using build_accurate_graph.
+Trying strategy: build_bidirectional_graph
+Path found using build_bidirectional_graph (4 nodes): Length = 3.70291 mm
+Full Path Details:
+  1. Pad(U1.9, net=NetC21_2)
+  2. Track((841.25, 893.7)-(885.83, 893.7), L=44.58mils)
+  3. Track((769.68, 822.14)-(841.25, 893.7), L=101.20mils)
+  4. Pad(C21.2, net=NetC21_2)
+Final Result: Length=3.70291 mm using build_bidirectional_graph
+
+Processing D8.2 <-> D4.2 on net GND (188 objects)
+Trying strategy: build_accurate_graph
+Path found using build_accurate_graph (4 nodes): Length = 1.99092 mm
+Full Path Details:
+  1. Pad(D8.2, net=GND)
+  2. Track((1334.65, 444.88)-(1360.0, 470.24), L=35.85mils)
+  3. Track((1360.0, 470.24)-(1402.53, 470.24), L=42.53mils)
+  4. Pad(D4.2, net=GND)
+Final Result: Length=1.99092 mm using build_accurate_graph
+
+Processing U1.62 <-> C44.1 on net PHC (31 objects)
+Trying strategy: build_accurate_graph
+No path found using build_accurate_graph.
+Trying strategy: build_bidirectional_graph
+Path found using build_bidirectional_graph (6 nodes): Length = 3.75556 mm
+Full Path Details:
+  1. Pad(U1.62, net=PHC)
+  2. Track((952.76, 1078.74)-(952.76, 1105.71), L=26.97mils)
+  3. Track((931.1, 1127.36)-(952.76, 1105.71), L=30.62mils)
+  4. Track((931.1, 1127.36)-(931.1, 1188.03), L=60.67mils)
+  5. Track((910.17, 1208.96)-(931.1, 1188.03), L=29.60mils)
+  6. Pad(C44.1, net=PHC)
+Final Result: Length=3.75556 mm using build_bidirectional_graph
+
+Processing U1.62 <-> R29.1 on net PHC (31 objects)
+Trying strategy: build_accurate_graph
+Path found using build_accurate_graph (22 nodes): Length = 48.45444 mm
+Full Path Details:
+  1. Pad(U1.62, net=PHC)
+  2. Track((952.76, 1078.74)-(952.76, 1105.71), L=26.97mils)
+  3. Track((931.1, 1127.36)-(952.76, 1105.71), L=30.62mils)
+  4. Track((931.1, 1127.36)-(931.1, 1188.03), L=60.67mils)
+  5. Track((910.17, 1208.96)-(931.1, 1188.03), L=29.60mils)
+  6. Track((893.99, 1208.96)-(910.17, 1208.96), L=16.18mils)
+  7. Track((854.33, 1169.3)-(893.99, 1208.96), L=56.09mils)
+  8. Track((854.33, 1141.73)-(854.33, 1169.3), L=27.56mils)
+  9. Track((853.65, 1141.06)-(854.33, 1141.73), L=0.95mils)
+  10. Track((836.65, 1141.06)-(853.65, 1141.06), L=17.01mils)
+  11. Track((806.24, 1110.64)-(836.65, 1141.06), L=43.01mils)
+  12. Track((806.24, 1040.48)-(806.24, 1110.64), L=70.17mils)
+  13. Track((806.24, 1040.48)-(903.75, 942.96), L=137.90mils)
+  14. Track((903.75, 641.17)-(903.75, 942.96), L=301.79mils)
+  15. Track((860.24, 597.66)-(903.75, 641.17), L=61.54mils)
+  16. Track((860.24, 375.68)-(860.24, 597.66), L=221.98mils)
+  17. Track((860.24, 375.68)-(889.46, 346.46), L=41.33mils)
+  18. Track((889.46, 346.46)-(1226.77, 346.46), L=337.31mils)
+  19. Track((1226.77, 346.46)-(1293.7, 279.53), L=94.65mils)
+  20. Track((1293.7, 279.53)-(1553.64, 279.53), L=259.94mils)
+  21. Track((1553.64, 279.53)-(1604.82, 330.71), L=72.38mils)
+  22. Pad(R29.1, net=PHC)
+Final Result: Length=48.45444 mm using build_accurate_graph
+
+Processing U1.66 <-> C28.2 on net GND (188 objects)
+Trying strategy: build_accurate_graph
+No path found using build_accurate_graph.
+Trying strategy: build_bidirectional_graph
+No path found using build_bidirectional_graph.
+No path found between U1.66 and C28.2 using any strategy.
+
+Processing U1.65 <-> R85.1 on net GND (188 objects)
+Trying strategy: build_accurate_graph
+No path found using build_accurate_graph.
+Trying strategy: build_bidirectional_graph
+No path found using build_bidirectional_graph.
+No path found between U1.65 and R85.1 using any strategy.
+
+Processing D8.2 <-> R85.1 on net GND (188 objects)
+Trying strategy: build_accurate_graph
+No path found using build_accurate_graph.
+Trying strategy: build_bidirectional_graph
+No path found using build_bidirectional_graph.
+No path found between D8.2 and R85.1 using any strategy.
+
+Processing U2.2 <-> C9.2 on net GND (188 objects)
+Trying strategy: build_accurate_graph
+No path found using build_accurate_graph.
+Trying strategy: build_bidirectional_graph
+No path found using build_bidirectional_graph.
+No path found between U2.2 and C9.2 using any strategy.
+Error: Pads are on different nets: SW3 vs NetC16_2
+
+Processing D5.1 <-> R37.2 on net GND (188 objects)
+Trying strategy: build_accurate_graph
+No path found using build_accurate_graph.
+Trying strategy: build_bidirectional_graph
+No path found using build_bidirectional_graph.
+No path found between D5.1 and R37.2 using any strategy.
+--- Assertions Complete ---
+
+Script finished.
