@@ -1,6 +1,12 @@
 from typing import Dict, List, Optional
 from langchain.tools import BaseTool
+import sys
+import os
+
+# Add the parent directory to system path to allow importing trace_extractor
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from trace_extractor import PCBTraceExtractor
+from ..config import TRACE_LENGTH_THRESHOLD, COMPONENT_COUNT_THRESHOLD
 
 class PCBAnalysisTool(BaseTool):
     # Remove class attributes and use hardcoded values in __init__
@@ -11,6 +17,8 @@ class PCBAnalysisTool(BaseTool):
         kwargs["description"] = "Analyzes PCB layout and provides insights about trace lengths, critical paths, and design issues"
         
         super().__init__(**kwargs)
+        print(f"PCBAnalysisTool initialized with pcb_data of type: {type(pcb_data)}")
+        print(f"PCB data keys: {pcb_data.keys() if isinstance(pcb_data, dict) else 'Not a dict'}")
         object.__setattr__(self, "__extractor", PCBTraceExtractor(pcb_data))
     
     @property
@@ -19,15 +27,19 @@ class PCBAnalysisTool(BaseTool):
     
     def _run(self, query: str) -> str:
         """Run the tool with a natural language query about the PCB."""
-        # Extract key information from the query
-        if "trace length" in query.lower():
-            return self._analyze_trace_lengths()
-        elif "critical path" in query.lower():
-            return self._analyze_critical_paths()
-        elif "design issue" in query.lower():
-            return self._analyze_design_issues()
-        else:
-            return "I can help analyze trace lengths, critical paths, and design issues. Please specify what you'd like to know."
+        try:
+            # Extract key information from the query
+            if "trace length" in query.lower():
+                return self._analyze_trace_lengths()
+            elif "critical path" in query.lower():
+                return self._analyze_critical_paths()
+            elif "design issue" in query.lower():
+                return self._analyze_design_issues()
+            else:
+                return "I can help analyze trace lengths, critical paths, and design issues. Please specify what you'd like to know."
+        except Exception as e:
+            # Return a helpful error message if something goes wrong
+            return f"Error performing PCB analysis: {str(e)}. Please check if the PCB data is valid."
     
     def _analyze_trace_lengths(self) -> str:
         """Analyze trace lengths in the PCB."""
@@ -66,11 +78,11 @@ class PCBAnalysisTool(BaseTool):
             if traces:
                 # Find the longest trace in each net
                 longest_trace = max(traces, key=lambda x: x["length_mm"])
-                if longest_trace["length_mm"] > 100:  # Example threshold
+                if longest_trace["length_mm"] > TRACE_LENGTH_THRESHOLD:
                     critical_paths.append({
                         "net": net_name,
                         "trace": longest_trace,
-                        "reason": "Trace length exceeds 100mm"
+                        "reason": f"Trace length exceeds {TRACE_LENGTH_THRESHOLD}mm"
                     })
         
         if not critical_paths:
@@ -92,16 +104,16 @@ class PCBAnalysisTool(BaseTool):
         # Check for nets with too many components
         nets = self.extractor.get_nets()
         for net in nets:
-            if net["component_count"] > 10:  # Example threshold
+            if net["component_count"] > COMPONENT_COUNT_THRESHOLD:
                 issues.append(f"Net {net['net_name']} has {net['component_count']} components, which might be too many for optimal routing")
         
         # Check for long traces
         for net in nets:
             traces = self.extractor.calculate_trace_lengths(net["net_name"])
             if traces:
-                long_traces = [t for t in traces if t["length_mm"] > 100]
+                long_traces = [t for t in traces if t["length_mm"] > TRACE_LENGTH_THRESHOLD]
                 if long_traces:
-                    issues.append(f"Net {net['net_name']} has {len(long_traces)} traces longer than 100mm")
+                    issues.append(f"Net {net['net_name']} has {len(long_traces)} traces longer than {TRACE_LENGTH_THRESHOLD}mm")
         
         if not issues:
             return "No significant design issues found in the current layout."

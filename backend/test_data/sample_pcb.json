@@ -1,0 +1,95 @@
+{
+  "components": [
+    {
+      "designator": "R1",
+      "layer": 1,
+      "pads": [
+        {
+          "padNumber": 1,
+          "netName": "NetR1_1",
+          "location": { "x": 100, "y": 100 },
+          "width": 5,
+          "height": 5,
+          "layer": 1
+        },
+        {
+          "padNumber": 2,
+          "netName": "NetR1_2",
+          "location": { "x": 200, "y": 100 },
+          "width": 5,
+          "height": 5,
+          "layer": 1
+        }
+      ]
+    },
+    {
+      "designator": "C1",
+      "layer": 1,
+      "pads": [
+        {
+          "padNumber": 1,
+          "netName": "NetR1_1",
+          "location": { "x": 100, "y": 200 },
+          "width": 5,
+          "height": 5,
+          "layer": 1
+        },
+        {
+          "padNumber": 2,
+          "netName": "GND",
+          "location": { "x": 200, "y": 200 },
+          "width": 5,
+          "height": 5,
+          "layer": 1
+        }
+      ]
+    },
+    {
+      "designator": "U1",
+      "layer": 1,
+      "pads": [
+        {
+          "padNumber": 1,
+          "netName": "NetR1_2",
+          "location": { "x": 300, "y": 100 },
+          "width": 5,
+          "height": 5,
+          "layer": 1
+        },
+        {
+          "padNumber": 2,
+          "netName": "GND",
+          "location": { "x": 300, "y": 200 },
+          "width": 5,
+          "height": 5,
+          "layer": 1
+        }
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "netName": "NetR1_1",
+      "layer": 1,
+      "start": { "x": 100, "y": 100 },
+      "end": { "x": 100, "y": 200 },
+      "length": 100
+    },
+    {
+      "netName": "NetR1_2",
+      "layer": 1,
+      "start": { "x": 200, "y": 100 },
+      "end": { "x": 300, "y": 100 },
+      "length": 100
+    },
+    {
+      "netName": "GND",
+      "layer": 1,
+      "start": { "x": 200, "y": 200 },
+      "end": { "x": 300, "y": 200 },
+      "length": 100
+    }
+  ],
+  "arcs": [],
+  "vias": []
+} 

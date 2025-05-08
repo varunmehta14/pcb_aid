@@ -9,6 +9,13 @@ from dotenv import load_dotenv
 from trace_extractor import PCBTraceExtractor
 from ai.workflow import PCBWorkflow
 
+# Import our API key manager
+from api_key_manager import require_valid_api_key
+import api_routes
+
+# Import the new board_routes with the safe analyzer
+from api.board_routes import router as board_router
+
 # Import the trace extractor
 import sys
 sys.path.append('..')  # Add parent directory to path for importing trace_extractor
@@ -31,6 +38,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include our API routes
+app.include_router(api_routes.router)
+
+# Include our new board routes
+app.include_router(board_router)
 
 # Store PCB data in memory (in production, use a proper database)
 pcb_data_store: Dict[str, dict] = {}
@@ -175,25 +188,13 @@ async def get_trace_path(board_id: str, request: TraceRequest):
         path_elements=path_info['path_elements']
     )
 
-@app.post("/board/{board_id}/analyze")
-async def analyze_pcb(board_id: str, query: AIQuery):
-    """Analyze the PCB using AI agents."""
-    if board_id not in pcb_data_store:
-        raise HTTPException(status_code=404, detail="PCB data not found")
-    
-    # Get OpenAI API key from environment
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-    if not openai_api_key:
-        raise HTTPException(
-            status_code=500,
-            detail="OpenAI API key not configured"
-        )
-    
-    # Create and run the AI workflow
-    workflow = PCBWorkflow(pcb_data_store[board_id], openai_api_key)
-    response = workflow.process_query(query.query)
-    
-    return {"response": response}
+# Replace the existing analyze_pcb route with a fallback endpoint
+# This is commented out because the new board_routes module provides this functionality
+# 
+# @app.post("/board/{board_id}/analyze")
+# async def analyze_pcb(board_id: str, query: AIQuery, api_key: str = Depends(require_valid_api_key)):
+#     """This route is now handled by board_routes module"""
+#     raise HTTPException(status_code=410, detail="This endpoint has been moved to /board/{board_id}/analyze")
 
 @app.get("/board/{board_id}/net/{net_name}/visualization")
 async def get_net_visualization(board_id: str, net_name: str):

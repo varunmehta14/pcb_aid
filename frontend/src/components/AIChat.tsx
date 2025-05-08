@@ -42,10 +42,10 @@ const AIChat = ({ boardId }: AIChatProps) => {
         query: input,
       })
 
-      // Add AI response
+      // Add AI response - use result field instead of response
       const aiMessage: Message = {
         role: 'assistant',
-        content: response.data.response,
+        content: response.data.result || response.data.response || 'No response received',
       }
       setMessages((prev) => [...prev, aiMessage])
     } catch (error) {

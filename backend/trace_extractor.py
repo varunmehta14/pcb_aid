@@ -351,6 +351,11 @@ class PCBTraceExtractor:
     Extracts and analyzes PCB traces from JSON data.
     """
     def __init__(self, pcb_data: dict = None):
+        print(f"PCBTraceExtractor initialized with pcb_data of type: {type(pcb_data)}")
+        if pcb_data:
+            print(f"PCB data keys: {pcb_data.keys()}")
+            print(f"Components length: {len(pcb_data.get('components', []))}")
+            
         self.pcb_data = pcb_data
         self.objects = []
         self.pads = []

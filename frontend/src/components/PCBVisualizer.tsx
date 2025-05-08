@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { Box, Spinner, Text } from '@chakra-ui/react'
-import { Stage, Layer, Line, Circle, Text as KonvaText } from 'react-konva'
+import { Stage, Layer, Line, Circle, Text as KonvaText, Rect, Group } from 'react-konva'
 import { getNetVisualization } from '../api/boardApi'
 
 interface PCBVisualizerProps {
@@ -12,7 +12,7 @@ interface PCBVisualizerProps {
 const PADDING = 50
 const SCALE_FACTOR = 0.5
 const PAD_RADIUS = 2
-const TRACK_WIDTH = 1
+const TRACK_WIDTH = 1.5  // Slightly thicker for better visibility
 const COLORS = {
   pad: '#e74c3c',
   track: '#3498db',
@@ -20,7 +20,11 @@ const COLORS = {
   arc: '#9b59b6',
   selected: '#f39c12',
   background: '#f5f5f5',
-  text: '#2c3e50'
+  text: '#2c3e50',
+  padStroke: '#c0392b',
+  viaStroke: '#27ae60',
+  componentBody: 'rgba(189, 195, 199, 0.7)',
+  componentStroke: '#7f8c8d'
 }
 
 interface Point {
@@ -34,6 +38,8 @@ const PCBVisualizer: React.FC<PCBVisualizerProps> = ({ boardId, selectedNet }) =
   const [error, setError] = useState<string | null>(null)
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 })
   const [viewport, setViewport] = useState({ minX: 0, minY: 0, maxX: 1000, maxY: 1000 })
+  const [scale, setScale] = useState(1)
+  const [position, setPosition] = useState({ x: 0, y: 0 })
   const stageRef = useRef<any>(null)
 
   useEffect(() => {
@@ -142,33 +148,88 @@ const PCBVisualizer: React.FC<PCBVisualizerProps> = ({ boardId, selectedNet }) =
     }
   }
   
+  // Add wheel handler for zooming
+  const handleWheel = (e: any) => {
+    e.evt.preventDefault();
+    
+    const stage = stageRef.current;
+    const oldScale = scale;
+    
+    // Get pointer position relative to stage
+    const pointer = stage.getPointerPosition();
+    const mousePointTo = {
+      x: (pointer.x - position.x) / oldScale,
+      y: (pointer.y - position.y) / oldScale,
+    };
+    
+    // Calculate new scale - limit min/max zoom
+    const newScale = e.evt.deltaY < 0 ? oldScale * 1.1 : oldScale / 1.1;
+    const limitedScale = Math.max(0.1, Math.min(10, newScale));
+    
+    // Update state
+    setScale(limitedScale);
+    
+    // Calculate new position so we zoom into the mouse pointer
+    const newPos = {
+      x: pointer.x - mousePointTo.x * limitedScale,
+      y: pointer.y - mousePointTo.y * limitedScale,
+    };
+    setPosition(newPos);
+  };
+  
+  // Add drag handler for panning
+  const handleDragStart = () => {
+    // Optional: Add any logic needed on drag start
+  };
+  
+  const handleDragEnd = (e: any) => {
+    setPosition({ 
+      x: e.target.x(),
+      y: e.target.y()
+    });
+  };
+  
   const renderPad = (element: any, index: number) => {
-    const point = transformPoint(element.location)
+    const point = transformPoint(element.location);
+    const isSquare = Math.random() > 0.5; // Randomly choose pad shape for variety (ideally this would be based on actual pad shape data)
     
     return (
-      <>
-        <Circle
-          key={`pad-${index}`}
-          x={point.x}
-          y={point.y}
-          radius={PAD_RADIUS * 3}
-          fill={COLORS.pad}
-        />
+      <Group key={`pad-group-${index}`}>
+        {isSquare ? (
+          <Rect
+            x={point.x - PAD_RADIUS * 2.5}
+            y={point.y - PAD_RADIUS * 2.5}
+            width={PAD_RADIUS * 5}
+            height={PAD_RADIUS * 5}
+            fill={COLORS.pad}
+            stroke={COLORS.padStroke}
+            strokeWidth={0.5}
+            cornerRadius={1}
+          />
+        ) : (
+          <Circle
+            x={point.x}
+            y={point.y}
+            radius={PAD_RADIUS * 3}
+            fill={COLORS.pad}
+            stroke={COLORS.padStroke}
+            strokeWidth={0.5}
+          />
+        )}
         <KonvaText
-          key={`pad-text-${index}`}
           x={point.x + PAD_RADIUS * 4}
           y={point.y - PAD_RADIUS * 4}
           text={`${element.component}.${element.pad}`}
           fontSize={10}
           fill={COLORS.text}
         />
-      </>
-    )
-  }
+      </Group>
+    );
+  };
   
   const renderTrack = (element: any, index: number) => {
-    const start = transformPoint(element.start)
-    const end = transformPoint(element.end)
+    const start = transformPoint(element.start);
+    const end = transformPoint(element.end);
     
     return (
       <Line
@@ -176,27 +237,49 @@ const PCBVisualizer: React.FC<PCBVisualizerProps> = ({ boardId, selectedNet }) =
         points={[start.x, start.y, end.x, end.y]}
         stroke={COLORS.track}
         strokeWidth={TRACK_WIDTH}
+        lineCap="round"
+        lineJoin="round"
       />
-    )
-  }
+    );
+  };
   
   const renderArc = (element: any, index: number) => {
-    // For simplicity, we'll approximate the arc with a series of line segments
-    const center = transformPoint(element.center)
-    const radius = element.radius * SCALE_FACTOR
-    const startAngle = element.start_angle * Math.PI / 180
-    const endAngle = element.end_angle * Math.PI / 180
+    // Improved arc rendering with more segments for smoother curves
+    const center = transformPoint(element.center);
+    const start = transformPoint(element.start);
+    const end = transformPoint(element.end);
     
     // Generate points along the arc
-    const numSegments = 32
-    const points: number[] = []
+    const numSegments = 48; // Increased for smoother curves
+    const points: number[] = [];
     
-    for (let i = 0; i <= numSegments; i++) {
-      const angle = startAngle + (endAngle - startAngle) * (i / numSegments)
-      const x = center.x + radius * Math.cos(angle)
-      const y = center.y + radius * Math.sin(angle)
-      points.push(x, y)
+    // Use actual start and end points for more accuracy
+    points.push(start.x, start.y);
+    
+    // Calculate angular distance
+    let startAngle = element.start_angle;
+    let endAngle = element.end_angle;
+    
+    // Handle angle wrapping
+    if (endAngle < startAngle) {
+      endAngle += 360;
     }
+    
+    // Convert to radians
+    const startRad = (startAngle * Math.PI) / 180;
+    const endRad = (endAngle * Math.PI) / 180;
+    
+    // Generate intermediate points
+    for (let i = 1; i < numSegments; i++) {
+      const angle = startRad + ((endRad - startRad) * i) / numSegments;
+      const radius = element.radius;
+      const x = center.x + radius * Math.cos(angle) * (stageSize.width / (viewport.maxX - viewport.minX));
+      const y = center.y + radius * Math.sin(angle) * (stageSize.height / (viewport.maxY - viewport.minY));
+      points.push(x, y);
+    }
+    
+    // Add the actual end point
+    points.push(end.x, end.y);
     
     return (
       <Line
@@ -204,23 +287,36 @@ const PCBVisualizer: React.FC<PCBVisualizerProps> = ({ boardId, selectedNet }) =
         points={points}
         stroke={COLORS.arc}
         strokeWidth={TRACK_WIDTH}
+        lineCap="round"
+        lineJoin="round"
       />
-    )
-  }
+    );
+  };
   
   const renderVia = (element: any, index: number) => {
-    const point = transformPoint(element.location)
+    const point = transformPoint(element.location);
     
     return (
-      <Circle
-        key={`via-${index}`}
-        x={point.x}
-        y={point.y}
-        radius={PAD_RADIUS * 2}
-        fill={COLORS.via}
-      />
-    )
-  }
+      <Group key={`via-group-${index}`}>
+        {/* Outer circle for via */}
+        <Circle
+          x={point.x}
+          y={point.y}
+          radius={PAD_RADIUS * 2.5}
+          fill={COLORS.via}
+          stroke={COLORS.viaStroke}
+          strokeWidth={0.5}
+        />
+        {/* Inner circle for hole */}
+        <Circle
+          x={point.x}
+          y={point.y}
+          radius={PAD_RADIUS * 1.2}
+          fill={COLORS.background}
+        />
+      </Group>
+    );
+  };
   
   if (loading) {
     return (
@@ -248,7 +344,18 @@ const PCBVisualizer: React.FC<PCBVisualizerProps> = ({ boardId, selectedNet }) =
   
   return (
     <Box width="100%" height="400px" overflow="hidden" backgroundColor={COLORS.background}>
-      <Stage width={stageSize.width} height={stageSize.height} ref={stageRef}>
+      <Stage 
+        width={stageSize.width} 
+        height={stageSize.height} 
+        ref={stageRef}
+        onWheel={handleWheel}
+        draggable
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        x={position.x}
+        y={position.y}
+        scale={{ x: scale, y: scale }}
+      >
         <Layer>
           {netData.path_elements.map((element: any, index: number) => {
             if (element.type === 'Pad') return renderPad(element, index)
