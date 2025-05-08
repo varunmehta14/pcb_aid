@@ -9,6 +9,9 @@ from dotenv import load_dotenv
 from trace_extractor import PCBTraceExtractor
 from ai.workflow import PCBWorkflow
 
+# Import dependencies
+from dependencies import pcb_data_store, get_pcb_data_store
+
 # Import our API key manager
 from api_key_manager import require_valid_api_key
 import api_routes
@@ -44,9 +47,6 @@ app.include_router(api_routes.router)
 
 # Include our new board routes
 app.include_router(board_router)
-
-# Store PCB data in memory (in production, use a proper database)
-pcb_data_store: Dict[str, dict] = {}
 
 # Pydantic models
 from pydantic import BaseModel
