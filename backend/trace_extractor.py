@@ -869,10 +869,10 @@ class PCBTraceExtractor:
         """Compatibility method"""
         return self.extract_traces_between_pads(component1, pad1, component2, pad2)
 
-    def get_trace_details(self, net_name: str) -> List[dict]:
+    def get_trace_details(self, net_name: str) -> dict:
         """Get detailed information about all traces in a net."""
         if not self.pcb_data:
-            return []
+            return {}
             
         # Get all pads for this net
         net_pads = []
@@ -925,11 +925,33 @@ class PCBTraceExtractor:
                     'hole_size': via.get('holeSize', 0)
                 })
         
+        # Try to get connection information for this net
+        connection_info = None
+        if len(net_pads) >= 2:
+            # Pick the first two pads to calculate a default path
+            pad1 = net_pads[0]
+            pad2 = net_pads[1]
+            
+            length = self.extract_traces_between_pads(
+                pad1['component'], pad1['pad'],
+                pad2['component'], pad2['pad']
+            )
+            
+            if length is not None:
+                connection_info = {
+                    'start_component': pad1['component'],
+                    'start_pad': pad1['pad'],
+                    'end_component': pad2['component'],
+                    'end_pad': pad2['pad'],
+                    'length_mm': length  # Already in mm from extract_traces_between_pads
+                }
+        
         return {
             'net_name': net_name,
             'pads': net_pads,
             'segments': net_segments,
-            'vias': net_vias
+            'vias': net_vias,
+            'connection_info': connection_info
         }
     
     def get_critical_paths(self, net_name: str) -> List[dict]:
@@ -963,7 +985,7 @@ class PCBTraceExtractor:
                         'start_pad': pad1['pad'],
                         'end_component': pad2['component'],
                         'end_pad': pad2['pad'],
-                        'length_mm': length * MILS_TO_MM
+                        'length_mm': length  # Already in mm from extract_traces_between_pads
                     })
         
         # Sort paths by length
@@ -1029,3 +1051,34 @@ class PCBTraceExtractor:
             plt.show()
         
         return fig
+
+    def get_components_by_net(self, net_name: str) -> List[dict]:
+        """
+        Get all components connected to a specific net.
+        
+        Args:
+            net_name: The name of the net to find components for
+            
+        Returns:
+            List of component objects with their pads connected to the net
+        """
+        components = {}
+        
+        # Get all pads on this net
+        for obj in self.objects:
+            if isinstance(obj, Pad) and obj.net_name == net_name:
+                # Add component to the dict if not already present
+                if obj.designator not in components:
+                    components[obj.designator] = {
+                        "designator": obj.designator,
+                        "pads": []
+                    }
+                
+                # Add this pad to the component
+                components[obj.designator]["pads"].append({
+                    "padNumber": obj.pad_number,
+                    "netName": obj.net_name
+                })
+        
+        # Return as a list for the API
+        return list(components.values())

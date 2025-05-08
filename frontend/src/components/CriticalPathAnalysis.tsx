@@ -22,24 +22,16 @@ import {
   StatHelpText,
   SimpleGrid
 } from '@chakra-ui/react'
-import { getTracePath, TraceResponse, calculateTrace } from '../api/boardApi'
+import { getTracePath, TraceResponse, getCriticalPaths, PathInfo } from '../api/boardApi'
 
 interface CriticalPathAnalysisProps {
   boardId: string
   selectedNet: string
 }
 
-interface CriticalPath {
-  start_component: string
-  start_pad: string
-  end_component: string
-  end_pad: string
-  length_mm: number
-}
-
 const CriticalPathAnalysis: React.FC<CriticalPathAnalysisProps> = ({ boardId, selectedNet }) => {
   const [loading, setLoading] = useState(true)
-  const [criticalPaths, setCriticalPaths] = useState<CriticalPath[]>([])
+  const [criticalPaths, setCriticalPaths] = useState<PathInfo[]>([])
   const [totalLength, setTotalLength] = useState(0)
   const [maxLength, setMaxLength] = useState(0)
   const [selectedPath, setSelectedPath] = useState<TraceResponse | null>(null)
@@ -50,101 +42,22 @@ const CriticalPathAnalysis: React.FC<CriticalPathAnalysisProps> = ({ boardId, se
   useEffect(() => {
     if (!boardId || !selectedNet) return
 
-    const analyzeCriticalPaths = async () => {
+    const fetchCriticalPaths = async () => {
       try {
         setLoading(true)
         
-        // In a real application, we'd have an API endpoint to get all critical paths directly
-        // For now, we'll use our test data for nets we know exist
-        // Note: This will be replaced with a proper backend endpoint in the future
+        // Use our new API endpoint to get critical paths
+        const pathsData = await getCriticalPaths(boardId, selectedNet)
         
-        // For NetC48_1, we know these components work from our tests
-        if (selectedNet === 'NetC48_1') {
-          const pathsToAnalyze = [
-            { start: 'SW2A.1', end: 'C48.1' },
-            { start: 'R82.1', end: 'C48.1' },
-            { start: 'SW2A.1', end: 'R82.1' }
-          ];
-          
-          const results = await Promise.all(
-            pathsToAnalyze.map(async ({ start, end }) => {
-              const [startComp, startPad] = start.split('.');
-              const [endComp, endPad] = end.split('.');
-              
-              try {
-                const result = await calculateTrace(boardId, {
-                  net_name: selectedNet,
-                  start_component: startComp,
-                  start_pad: startPad,
-                  end_component: endComp,
-                  end_pad: endPad
-                });
-                
-                return {
-                  start_component: startComp,
-                  start_pad: startPad,
-                  end_component: endComp,
-                  end_pad: endPad,
-                  length_mm: result.length_mm || 0
-                };
-              } catch (err) {
-                console.warn(`Could not calculate path from ${start} to ${end}:`, err);
-                return null;
-              }
-            })
-          );
-          
-          // Filter out failed calculations
-          const validResults = results.filter(result => result !== null) as CriticalPath[];
-          
-          // Sort by length (descending)
-          const sortedPaths = [...validResults].sort((a, b) => b.length_mm - a.length_mm);
-          
-          setCriticalPaths(sortedPaths);
-          
-          // Calculate statistics
-          if (sortedPaths.length > 0) {
-            setMaxLength(sortedPaths[0].length_mm);
-            const total = sortedPaths.reduce((sum, path) => sum + path.length_mm, 0);
-            setTotalLength(total);
-          }
-        } else {
-          // Fallback for other nets - could be replaced with real API when available
-          const samplePaths: CriticalPath[] = [
-            {
-              start_component: 'U1',
-              start_pad: '1',
-              end_component: 'R1',
-              end_pad: '1',
-              length_mm: 12.5
-            },
-            {
-              start_component: 'R1',
-              start_pad: '2',
-              end_component: 'C1',
-              end_pad: '1',
-              length_mm: 8.2
-            },
-            {
-              start_component: 'U1',
-              start_pad: '2',
-              end_component: 'C1',
-              end_pad: '2',
-              length_mm: 5.7
-            }
-          ]
-          
-          // Sort by length (descending)
-          const sortedPaths = [...samplePaths].sort((a, b) => b.length_mm - a.length_mm)
-          
-          setCriticalPaths(sortedPaths)
-          
-          // Calculate statistics
-          if (sortedPaths.length > 0) {
-            setMaxLength(sortedPaths[0].length_mm)
-            const total = sortedPaths.reduce((sum, path) => sum + path.length_mm, 0)
-            setTotalLength(total)
-          }
+        // Sort by length (descending)
+        const sortedPaths = [...pathsData.paths].sort((a, b) => b.length_mm - a.length_mm)
+        
+        setCriticalPaths(sortedPaths)
+        
+        // Set statistics
+        if (sortedPaths.length > 0) {
+          setMaxLength(sortedPaths[0].length_mm)
+          setTotalLength(pathsData.total_length_mm)
         }
         
         setLoading(false)
@@ -161,10 +74,10 @@ const CriticalPathAnalysis: React.FC<CriticalPathAnalysisProps> = ({ boardId, se
       }
     }
     
-    analyzeCriticalPaths()
+    fetchCriticalPaths()
   }, [boardId, selectedNet, toast])
   
-  const handleViewPathDetails = async (path: CriticalPath) => {
+  const handleViewPathDetails = async (path: PathInfo) => {
     try {
       setAnalyzingPath(true)
       

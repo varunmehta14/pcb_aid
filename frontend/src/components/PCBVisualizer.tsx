@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { Box, Spinner, Text } from '@chakra-ui/react'
 import { Stage, Layer, Line, Circle, Text as KonvaText } from 'react-konva'
-import { getTracePath, TraceResponse, getNetList } from '../api/boardApi'
+import { getNetVisualization } from '../api/boardApi'
 
 interface PCBVisualizerProps {
   boardId: string
@@ -44,40 +44,17 @@ const PCBVisualizer: React.FC<PCBVisualizerProps> = ({ boardId, selectedNet }) =
         setLoading(true)
         setError(null)
         
-        // Get network details for visualization
-        const nets = await getNetList(boardId)
-        const selectedNetInfo = nets.find(net => net.net_name === selectedNet)
-
-        if (!selectedNetInfo) {
-          setError(`Net ${selectedNet} not found`)
-          setLoading(false)
-          return
-        }
-
-        // For visualization, we'll need to get full details of the net
-        // This would typically come from an API endpoint like /board/{boardId}/net/{netName}/details
-        // Here we'll simulate it by building a visualization from another endpoint
-        
-        // Find two pads to request the trace path between them
-        // In a real implementation, you'd get all the net geometry from a dedicated endpoint
-        const dummyRequest = {
-          net_name: selectedNet,
-          start_component: "U1",  // Placeholder - in a real app, find actual components
-          start_pad: "22",
-          end_component: "R17",
-          end_pad: "1"
-        }
-        
-        const pathData = await getTracePath(boardId, dummyRequest)
-        setNetData(pathData)
+        // Use our new API endpoint to get net visualization data
+        const visualizationData = await getNetVisualization(boardId, selectedNet)
+        setNetData(visualizationData)
         
         // Calculate viewport based on the actual geometry
-        calculateViewport(pathData)
+        calculateViewport(visualizationData)
         
         setLoading(false)
       } catch (err) {
-        console.error('Error fetching net data:', err)
-        setError('Failed to load net data for visualization')
+        console.error('Error fetching net visualization data:', err)
+        setError('Failed to load visualization data for the selected net')
         setLoading(false)
       }
     }
@@ -85,7 +62,7 @@ const PCBVisualizer: React.FC<PCBVisualizerProps> = ({ boardId, selectedNet }) =
     fetchNetData()
   }, [boardId, selectedNet])
   
-  const calculateViewport = (data: TraceResponse) => {
+  const calculateViewport = (data: any) => {
     // Initialize min/max values
     let minX = Number.MAX_SAFE_INTEGER
     let minY = Number.MAX_SAFE_INTEGER
@@ -94,7 +71,7 @@ const PCBVisualizer: React.FC<PCBVisualizerProps> = ({ boardId, selectedNet }) =
     
     if (data?.path_elements) {
       // Iterate through all elements to find bounds
-      data.path_elements.forEach(element => {
+      data.path_elements.forEach((element: any) => {
         if (element.type === 'Pad' || element.type === 'Via') {
           const x = element.location[0]
           const y = element.location[1]
@@ -129,6 +106,12 @@ const PCBVisualizer: React.FC<PCBVisualizerProps> = ({ boardId, selectedNet }) =
       // Add padding
       const width = maxX - minX + 2 * PADDING
       const height = maxY - minY + 2 * PADDING
+      
+      // Update viewport bounds with padding
+      minX -= PADDING
+      minY -= PADDING
+      maxX += PADDING
+      maxY += PADDING
       
       setViewport({ minX, minY, maxX, maxY })
       
@@ -278,12 +261,20 @@ const PCBVisualizer: React.FC<PCBVisualizerProps> = ({ boardId, selectedNet }) =
       </Stage>
       
       <Box mt={2} p={2} borderWidth="1px" borderRadius="md">
-        <Text fontSize="sm">
-          Trace: {netData.start_component}.{netData.start_pad} to {netData.end_component}.{netData.end_pad}
-        </Text>
-        <Text fontSize="sm">
-          Length: {netData.length_mm?.toFixed(2)} mm
-        </Text>
+        {netData.start_component && netData.end_component ? (
+          <>
+            <Text fontSize="sm">
+              Trace: {netData.start_component}.{netData.start_pad} to {netData.end_component}.{netData.end_pad}
+            </Text>
+            <Text fontSize="sm">
+              Length: {netData.length_mm?.toFixed(2) || 'N/A'} mm
+            </Text>
+          </>
+        ) : (
+          <Text fontSize="sm">
+            Net: {netData.net_name || selectedNet}
+          </Text>
+        )}
       </Box>
     </Box>
   )

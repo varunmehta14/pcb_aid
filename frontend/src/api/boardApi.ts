@@ -60,6 +60,21 @@ export interface TraceResponse {
   path_elements: PathElement[] | null
 }
 
+export interface PathInfo {
+  start_component: string
+  start_pad: string
+  end_component: string
+  end_pad: string
+  length_mm: number
+}
+
+export interface CriticalPathsResponse {
+  net_name: string
+  paths: PathInfo[]
+  longest_path: PathInfo | null
+  total_length_mm: number
+}
+
 // API functions
 export const uploadPCBFile = async (file: File): Promise<UploadResponse> => {
   const formData = new FormData()
@@ -113,6 +128,16 @@ export const getNetComponents = async (boardId: string, netName: string): Promis
   }
 }
 
+export const getNetVisualization = async (boardId: string, netName: string): Promise<any> => {
+  try {
+    const response = await api.get(`/board/${boardId}/net/${netName}/visualization`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching net visualization data:', error)
+    throw error
+  }
+}
+
 export const calculateTrace = async (
   boardId: string,
   request: TraceRequest
@@ -134,4 +159,20 @@ export const getTracePath = async (
     request
   )
   return response.data
+}
+
+export const getCriticalPaths = async (boardId: string, netName: string): Promise<CriticalPathsResponse> => {
+  try {
+    const response = await api.get<CriticalPathsResponse>(`/board/${boardId}/net/${netName}/critical_paths`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching critical path data:', error)
+    // Return placeholder data for now
+    return {
+      net_name: netName,
+      paths: [],
+      longest_path: null,
+      total_length_mm: 0
+    }
+  }
 } 

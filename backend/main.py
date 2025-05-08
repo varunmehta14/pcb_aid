@@ -103,6 +103,21 @@ async def get_nets(board_id: str):
     extractor = PCBTraceExtractor(pcb_data_store[board_id])
     return extractor.get_nets()
 
+@app.get("/board/{board_id}/net/{net_name}/components")
+async def get_net_components(board_id: str, net_name: str):
+    """Get components connected to a specific net."""
+    if board_id not in pcb_data_store:
+        raise HTTPException(status_code=404, detail="PCB data not found")
+    
+    extractor = PCBTraceExtractor(pcb_data_store[board_id])
+    components = extractor.get_components_by_net(net_name)
+    
+    if not components:
+        # Return empty array instead of 404 to match frontend expectations
+        return []
+    
+    return components
+
 @app.post("/board/{board_id}/calculate_trace", response_model=TraceResponse)
 async def calculate_trace(board_id: str, request: TraceRequest):
     """Calculate trace length between two pads."""
@@ -110,14 +125,14 @@ async def calculate_trace(board_id: str, request: TraceRequest):
         raise HTTPException(status_code=404, detail="PCB data not found")
     
     extractor = PCBTraceExtractor(pcb_data_store[board_id])
-    length = extractor.extract_traces_between_pads(
+    path_info = extractor.get_trace_path(
         request.start_component,
         request.start_pad,
         request.end_component,
         request.end_pad
     )
     
-    if length is None:
+    if not path_info['path_exists']:
         raise HTTPException(status_code=404, detail="Trace not found")
     
     return TraceResponse(
@@ -126,7 +141,9 @@ async def calculate_trace(board_id: str, request: TraceRequest):
         start_pad=request.start_pad,
         end_component=request.end_component,
         end_pad=request.end_pad,
-        length_mm=length  # Already in mm from extract_traces_between_pads
+        length_mm=path_info['length_mm'],
+        path_description=path_info['path_description'],
+        path_elements=path_info['path_elements']
     )
 
 @app.post("/board/{board_id}/trace_path", response_model=TraceResponse)
@@ -146,6 +163,7 @@ async def get_trace_path(board_id: str, request: TraceRequest):
     if not path_info['path_exists']:
         raise HTTPException(status_code=404, detail="Trace path not found")
     
+    # Directly use the path_elements from get_trace_path if available
     return TraceResponse(
         net_name=request.net_name,
         start_component=request.start_component,
@@ -176,6 +194,95 @@ async def analyze_pcb(board_id: str, query: AIQuery):
     response = workflow.process_query(query.query)
     
     return {"response": response}
+
+@app.get("/board/{board_id}/net/{net_name}/visualization")
+async def get_net_visualization(board_id: str, net_name: str):
+    """Get visualization data for a specific net."""
+    if board_id not in pcb_data_store:
+        raise HTTPException(status_code=404, detail="PCB data not found")
+    
+    extractor = PCBTraceExtractor(pcb_data_store[board_id])
+    trace_details = extractor.get_trace_details(net_name)
+    
+    if not trace_details:
+        raise HTTPException(status_code=404, detail=f"Net {net_name} not found or has no visualization data")
+    
+    # Convert raw trace details into visualization-friendly format
+    # This transforms the data to match the format expected by the PCBVisualizer component
+    visualization_data = {
+        'net_name': net_name,
+        'path_elements': []
+    }
+    
+    # Add component connection information if available
+    if 'connection_info' in trace_details and trace_details['connection_info']:
+        connection = trace_details['connection_info']
+        visualization_data.update({
+            'start_component': connection.get('start_component', ''),
+            'start_pad': connection.get('start_pad', ''),
+            'end_component': connection.get('end_component', ''),
+            'end_pad': connection.get('end_pad', ''),
+            'length_mm': connection.get('length_mm', None)
+        })
+    
+    # Add pads
+    for pad in trace_details['pads']:
+        visualization_data['path_elements'].append({
+            'type': 'Pad',
+            'component': pad['component'],
+            'pad': pad['pad'],
+            'location': [pad['x'], pad['y']],
+            'layer': pad['layer']
+        })
+    
+    # Add tracks and arcs (segments)
+    for segment in trace_details['segments']:
+        if segment['type'] == 'track':
+            visualization_data['path_elements'].append({
+                'type': 'Track',
+                'start': [segment['start']['x'], segment['start']['y']],
+                'end': [segment['end']['x'], segment['end']['y']],
+                'layer': segment['layer'],
+                'length': segment['length']
+            })
+        elif segment['type'] == 'arc':
+            visualization_data['path_elements'].append({
+                'type': 'Arc',
+                'center': [segment['center']['x'], segment['center']['y']],
+                'radius': segment['radius'],
+                'start_angle': segment['start_angle'],
+                'end_angle': segment['end_angle'],
+                'start': [segment['start']['x'], segment['start']['y']],
+                'end': [segment['end']['x'], segment['end']['y']],
+                'layer': segment['layer'],
+                'length': segment['length']
+            })
+    
+    # Add vias
+    for via in trace_details['vias']:
+        visualization_data['path_elements'].append({
+            'type': 'Via',
+            'location': [via['x'], via['y']],
+            'from_layer': via['from_layer'],
+            'to_layer': via['to_layer'],
+            'layer': f"{via['from_layer']}-{via['to_layer']}"  # Layer representation for vias
+        })
+    
+    return visualization_data
+
+@app.get("/board/{board_id}/net/{net_name}/critical_paths")
+async def get_critical_paths(board_id: str, net_name: str):
+    """Get critical path analysis for a specific net."""
+    if board_id not in pcb_data_store:
+        raise HTTPException(status_code=404, detail="PCB data not found")
+    
+    extractor = PCBTraceExtractor(pcb_data_store[board_id])
+    critical_paths = extractor.get_critical_paths(net_name)
+    
+    if not critical_paths:
+        raise HTTPException(status_code=404, detail=f"No critical path data found for net {net_name}")
+    
+    return critical_paths
 
 if __name__ == "__main__":
     import uvicorn
