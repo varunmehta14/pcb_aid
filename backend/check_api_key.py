@@ -13,7 +13,7 @@ def check_openrouter_api():
     load_dotenv()
     
     # Get the API key from environment or use hardcoded one
-    api_key = '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'
+    api_key = 'x'
     
     if not api_key:
         print("Error: API key not found")
