@@ -8,6 +8,8 @@ from typing import Dict, List, Optional, Any
 from dotenv import load_dotenv
 from trace_extractor import PCBTraceExtractor
 from ai.workflow import PCBWorkflow
+import traceback
+import plotly.graph_objects as go
 
 # Import dependencies
 from dependencies import pcb_data_store, get_pcb_data_store
@@ -284,6 +286,37 @@ async def get_critical_paths(board_id: str, net_name: str):
         raise HTTPException(status_code=404, detail=f"No critical path data found for net {net_name}")
     
     return critical_paths
+
+@app.get("/api/boards/{board_id}/nets/{net_name}/visualize3d_data")
+async def get_net_visualization_3d_data(board_id: str, net_name: str):
+    """
+    Get 3D visualization data for a specific net on a board.
+    Returns the data and layout for a Plotly figure as JSON.
+    """
+    if board_id not in pcb_data_store:
+        raise HTTPException(status_code=404, detail=f"Board with ID '{board_id}' not found.")
+    
+    pcb_data = pcb_data_store[board_id]
+    
+    try:
+        extractor = PCBTraceExtractor(pcb_data=pcb_data)
+        # Call with auto_show=False as we don't want to trigger browser view from API
+        fig = extractor.visualize_net_3d(net_name=net_name, auto_show=False)
+        
+        if fig is None:
+            # This can happen if net_details in visualize_net_3d is empty (e.g., net not found)
+            raise HTTPException(status_code=404, detail=f"Net '{net_name}' not found or has no visualizable elements on board '{board_id}'.")
+
+        # Convert Plotly figure to JSON
+        figure_json = fig.to_json()
+        # The result of to_json() is a JSON string, so we parse it back to a dict/list structure
+        # to be properly re-serialized by FastAPI's JSONResponse.
+        return json.loads(figure_json)
+        
+    except Exception as e:
+        print(f"Error generating 3D visualization for board {board_id}, net {net_name}: {e}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Error generating 3D visualization: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

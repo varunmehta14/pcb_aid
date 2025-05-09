@@ -10,6 +10,9 @@ from collections import defaultdict, deque
 from typing import List, Dict, Optional, Any, Tuple
 import matplotlib.pyplot as plt # Keep commented out unless visualizing
 
+import plotly.graph_objects as go # Added for 3D visualization
+import numpy as np # Added for potential arc calculations
+
 # Constants for unit conversion and tolerances
 MM_TO_PCB_UNITS = 1000000  # 1 mm = 1,000,000 PCB units (assuming PCB units are nm)
 PCB_UNITS_TO_MM = 1 / MM_TO_PCB_UNITS # Not actually used in length calculation directly
@@ -1004,8 +1007,8 @@ class PCBTraceExtractor:
         }
     
     def visualize_net(self, net_name: str, output_path: str = None):
-        """Visualize a net's traces and components."""
-        from matplotlib.patches import Circle, Rectangle, Arc as MplArc
+        """Visualize a net's traces and components using Matplotlib (2D)."""
+        from matplotlib.patches import Circle, Rectangle, Arc as MplArc # Local import is fine
         
         # Get net details
         net_details = self.get_trace_details(net_name)
@@ -1057,6 +1060,351 @@ class PCBTraceExtractor:
         
         return fig
 
+    def _get_color_for_net(self, net_name: str) -> str:
+        """
+        Generate a consistent color for a given net name.
+        
+        Args:
+            net_name: The name of the net
+            
+        Returns:
+            A hex color string
+        """
+        # Common net names get fixed colors
+        common_nets = {
+            'GND': '#1a1a1a',       # Dark gray/black
+            'VCC': '#ff0000',       # Red
+            'VDD': '#ff3333',       # Lighter red
+            'VBUS': '#ff6600',      # Orange
+            'VSS': '#404040',       # Dark gray
+            '3V3': '#cc33ff',       # Purple
+            '5V': '#9900cc',        # Dark purple
+            'AGND': '#333333',      # Gray
+            'DGND': '#4d4d4d',      # Light gray
+            'VBAT': '#ffcc00'       # Yellow
+        }
+        
+        # Check if this is a common net first
+        if net_name in common_nets:
+            return common_nets[net_name]
+        
+        # Otherwise, generate a deterministic color based on hash of net name
+        import hashlib
+        hash_obj = hashlib.md5(net_name.encode())
+        hash_int = int(hash_obj.hexdigest(), 16)
+        
+        # Use the hash to generate RGB values (avoiding too dark or too light colors)
+        r = ((hash_int & 0xFF0000) >> 16) % 200 + 55  # Range 55-255
+        g = ((hash_int & 0x00FF00) >> 8) % 200 + 55   # Range 55-255
+        b = (hash_int & 0x0000FF) % 200 + 55          # Range 55-255
+        
+        # Return as hex color string
+        return f'#{r:02x}{g:02x}{b:02x}'
+
+    def visualize_net_3d(self, net_name: str, output_file_path: Optional[str] = None, auto_show: bool = False):
+        """
+        Visualize a specified net in 3D using Plotly with advanced rendering.
+
+        Args:
+            net_name: The name of the net to visualize.
+            output_file_path: Optional. If provided, saves the visualization to an HTML file.
+            auto_show: Optional. If True and output_file_path is None, tries to show it in a browser.
+                      Defaults to False for programmatic use.
+        
+        Returns:
+            A Plotly Figure object or None if the net is not found.
+        """
+        from plotly.subplots import make_subplots
+        
+        net_details = self.get_trace_details(net_name)
+        if not net_details:
+            print(f"Net {net_name} not found or no details available.")
+            return None
+
+        # Create a figure with subplots for a more advanced 3D view
+        fig = make_subplots(rows=1, cols=1, specs=[[{'type': 'scatter3d'}]])
+
+        # Extract all unique layers across the entire net's elements
+        all_layers = set()
+        
+        # Add layers from pads
+        for pad in net_details.get('pads', []):
+            all_layers.add(pad['layer'])
+            
+        # Add layers from segments (tracks and arcs)
+        for segment in net_details.get('segments', []):
+            all_layers.add(segment['layer'])
+            
+        # Add layers from vias (both from and to layers)
+        for via in net_details.get('vias', []):
+            all_layers.add(via['from_layer'])
+            all_layers.add(via['to_layer'])
+        
+        # Sort layers to ensure consistent z ordering
+        all_layers = sorted(list(all_layers))
+        
+        # Calculate z-coordinate for each layer (space them out evenly)
+        # More sophisticated z-scaling compared to original method
+        layer_spacing = 15  # Increased from 10 for better visual separation
+        layer_to_z = {layer: layer_spacing * i for i, layer in enumerate(all_layers)}
+        
+        # Get color for this net
+        net_color = self._get_color_for_net(net_name)
+        
+        # 1. Plot Pads as markers with text labels
+        x_pad, y_pad, z_pad = [], [], []
+        pad_texts = []
+        
+        for pad in net_details.get('pads', []):
+            x_pad.append(pad['x'])
+            y_pad.append(pad['y'])
+            # Use the layer mapping for z-coordinates
+            z_pad.append(layer_to_z[pad['layer']])
+            pad_texts.append(f"{pad['component']}.{pad['pad']}")
+        
+        if x_pad:
+            # Add the pads as markers
+            fig.add_trace(go.Scatter3d(
+                x=x_pad, y=y_pad, z=z_pad,
+                mode='markers+text',
+                marker=dict(
+                    size=7,  # Slightly larger for better visibility
+                    color='red',
+                    symbol='circle',
+                    line=dict(color='black', width=1)  # Add outline for better visibility
+                ),
+                text=pad_texts,
+                textposition='top center',
+                hoverinfo='text',
+                hovertext=[f"Pad: {txt}<br>Layer: {pad['layer']}<br>Net: {net_name}" 
+                           for txt, pad in zip(pad_texts, net_details.get('pads', []))],
+                name='Pads'
+            ))
+
+        # 2. Plot Tracks with proper color by net and improved grouping
+        # Group tracks by layer for better visualization
+        layer_to_tracks = {}
+        for segment in net_details.get('segments', []):
+            if segment['type'] == 'track':
+                layer = segment['layer']
+                if layer not in layer_to_tracks:
+                    layer_to_tracks[layer] = []
+                layer_to_tracks[layer].append(segment)
+        
+        # Add tracks by layer
+        for layer, tracks in layer_to_tracks.items():
+            x_track, y_track, z_track = [], [], []
+            hover_texts = []
+            
+            for track in tracks:
+                # Add start point
+                x_track.append(track['start']['x'])
+                y_track.append(track['start']['y'])
+                z_track.append(layer_to_z[layer])
+                hover_texts.append(f"Track<br>Layer: {layer}<br>Length: {track['length']:.2f} mils")
+                
+                # Add end point
+                x_track.append(track['end']['x'])
+                y_track.append(track['end']['y'])
+                z_track.append(layer_to_z[layer])
+                hover_texts.append(f"Track<br>Layer: {layer}<br>Length: {track['length']:.2f} mils")
+                
+                # Add None to create a break (for discontinuous lines)
+                x_track.append(None)
+                y_track.append(None)
+                z_track.append(None)
+                hover_texts.append(None)
+            
+            # Add the tracks for this layer
+            fig.add_trace(go.Scatter3d(
+                x=x_track, y=y_track, z=z_track,
+                mode='lines',
+                line=dict(color=net_color, width=4),
+                hoverinfo='text',
+                hovertext=hover_texts,
+                name=f'Tracks (Layer {layer})'
+            ))
+        
+        # 3. Plot Arcs as curved segments (better than straight lines)
+        # Group arcs by layer like tracks
+        layer_to_arcs = {}
+        for segment in net_details.get('segments', []):
+            if segment['type'] == 'arc':
+                layer = segment['layer']
+                if layer not in layer_to_arcs:
+                    layer_to_arcs[layer] = []
+                layer_to_arcs[layer].append(segment)
+        
+        # Add arcs by layer with improved rendering
+        for layer, arcs in layer_to_arcs.items():
+            for i, arc in enumerate(arcs):
+                # Generate points along the arc (more accurate than straight line)
+                center_x, center_y = arc['center']['x'], arc['center']['y']
+                radius = arc['radius']
+                start_angle = arc['start_angle']
+                end_angle = arc['end_angle']
+                
+                # Calculate delta angle, handling wrap-around
+                delta_angle = end_angle - start_angle
+                if delta_angle < 0:
+                    delta_angle += 360
+                
+                # Generate points along the arc (more points for smoother curve)
+                num_segments = max(int(delta_angle / 5), 12)  # More segments for larger arcs
+                x_arc, y_arc, z_arc = [], [], []
+                hover_texts = []
+                
+                for j in range(num_segments + 1):
+                    angle = start_angle + delta_angle * j / num_segments
+                    angle_rad = math.radians(angle)
+                    x = center_x + radius * math.cos(angle_rad)
+                    y = center_y + radius * math.sin(angle_rad)
+                    
+                    x_arc.append(x)
+                    y_arc.append(y)
+                    z_arc.append(layer_to_z[layer])
+                    hover_texts.append(f"Arc<br>Layer: {layer}<br>Radius: {radius:.2f} mils<br>Length: {arc['length']:.2f} mils")
+                
+                # Override first and last points with exact start/end from data
+                if len(x_arc) > 1:
+                    x_arc[0], y_arc[0] = arc['start']['x'], arc['start']['y']
+                    x_arc[-1], y_arc[-1] = arc['end']['x'], arc['end']['y']
+                
+                # Add the arc to the figure
+                fig.add_trace(go.Scatter3d(
+                    x=x_arc, y=y_arc, z=z_arc,
+                    mode='lines',
+                    line=dict(
+                        color=net_color,
+                        width=3,
+                        dash='solid'  # Solid line instead of dashed for arcs
+                    ),
+                    hoverinfo='text',
+                    hovertext=hover_texts,
+                    name=f'Arc-{i} (Layer {layer})'
+                ))
+        
+        # 4. Plot Vias with improved 3D representation
+        for i, via in enumerate(net_details.get('vias', [])):
+            via_x, via_y = via['x'], via['y']
+            from_layer_z = layer_to_z[via['from_layer']]
+            to_layer_z = layer_to_z[via['to_layer']]
+            
+            # Create a cylinder-like structure for vias (vertical line + markers at each layer)
+            # Add the vertical line connecting layers
+            fig.add_trace(go.Scatter3d(
+                x=[via_x, via_x],
+                y=[via_y, via_y],
+                z=[from_layer_z, to_layer_z],
+                mode='lines',
+                line=dict(color='green', width=6),
+                hoverinfo='text',
+                hovertext=[
+                    f"Via<br>Net: {net_name}<br>From Layer: {via['from_layer']}<br>To Layer: {via['to_layer']}<br>Hole: {via['hole_size']:.1f} mils",
+                    f"Via<br>Net: {net_name}<br>From Layer: {via['from_layer']}<br>To Layer: {via['to_layer']}<br>Hole: {via['hole_size']:.1f} mils"
+                ],
+                name=f'Via-{i}'
+            ))
+            
+            # Add markers at each end for better visibility
+            fig.add_trace(go.Scatter3d(
+                x=[via_x, via_x],
+                y=[via_y, via_y],
+                z=[from_layer_z, to_layer_z],
+                mode='markers',
+                marker=dict(
+                    size=5,
+                    color='lightgreen',
+                    symbol='circle',
+                    line=dict(color='darkgreen', width=1)
+                ),
+                hoverinfo='text',
+                hovertext=[
+                    f"Via connection at Layer {via['from_layer']}",
+                    f"Via connection at Layer {via['to_layer']}"
+                ],
+                showlegend=False
+            ))
+            
+            # Add markers at intermediate layers that this via passes through
+            if abs(via['to_layer'] - via['from_layer']) > 1:
+                # Find intermediate layers
+                lower_layer = min(via['from_layer'], via['to_layer'])
+                upper_layer = max(via['from_layer'], via['to_layer'])
+                intermediate_layers = [l for l in all_layers if lower_layer < l < upper_layer]
+                
+                for layer in intermediate_layers:
+                    layer_z = layer_to_z[layer]
+                    # Add a marker at this intermediate layer
+                    fig.add_trace(go.Scatter3d(
+                        x=[via_x],
+                        y=[via_y],
+                        z=[layer_z],
+                        mode='markers',
+                        marker=dict(
+                            size=4,
+                            color='lime',
+                            symbol='circle',
+                            line=dict(color='darkgreen', width=1)
+                        ),
+                        hoverinfo='text',
+                        hovertext=[f"Via passing through Layer {layer}"],
+                        showlegend=False
+                    ))
+
+        # Create the layout with improved settings
+        layout = dict(
+            title=dict(
+                text=f'3D Visualization of Net: {net_name}',
+                font=dict(size=16, color='black')
+            ),
+            scene=dict(
+                camera=dict(
+                    eye=dict(x=1.5, y=1.5, z=1.0),  # Better initial camera position
+                ),
+                xaxis=dict(
+                    title='X (mils)',
+                    gridcolor='lightgray',
+                    showbackground=True,
+                    backgroundcolor='rgb(245, 245, 245)'
+                ),
+                yaxis=dict(
+                    title='Y (mils)',
+                    gridcolor='lightgray',
+                    showbackground=True,
+                    backgroundcolor='rgb(245, 245, 245)'
+                ),
+                zaxis=dict(
+                    title='Layer',
+                    gridcolor='lightgray',
+                    showbackground=True,
+                    backgroundcolor='rgb(245, 245, 245)'
+                ),
+                aspectmode='data'  # Keep data aspect ratio
+            ),
+            margin=dict(l=0, r=0, b=0, t=40),
+            legend=dict(
+                x=0,
+                y=1,
+                bgcolor='rgba(255, 255, 255, 0.7)',
+                bordercolor='gray',
+                borderwidth=1
+            ),
+            hovermode='closest'
+        )
+
+        # Update the figure layout
+        fig.update_layout(layout)
+
+        # Save or show the figure
+        if output_file_path:
+            fig.write_html(output_file_path)
+            print(f"3D visualization saved to {output_file_path}")
+        elif auto_show:
+            fig.show()  # Opens in browser
+
+        return fig
+
     def get_components_by_net(self, net_name: str) -> List[dict]:
         """
         Get all components connected to a specific net.
@@ -1087,3 +1435,67 @@ class PCBTraceExtractor:
         
         # Return as a list for the API
         return list(components.values())
+
+if __name__ == "__main__":
+    # Example Usage for visualize_net_3d
+
+    # 1. Define a simple sample PCB data structure
+    sample_pcb_data = {
+        "components": [
+            {
+                "designator": "U1", "layer": 1,
+                "pads": [
+                    {"padNumber": "1", "netName": "NetA", "location": {"x": 100, "y": 100}, "layer": 1, "width": 10, "height": 10},
+                    {"padNumber": "2", "netName": "NetA", "location": {"x": 500, "y": 500}, "layer": 2, "width": 10, "height": 10}
+                ]
+            },
+            {
+                "designator": "R1", "layer": 1,
+                "pads": [
+                    {"padNumber": "1", "netName": "NetA", "location": {"x": 100, "y": 300}, "layer": 1, "width": 8, "height": 8},
+                ]
+            }
+        ],
+        "tracks": [
+            {"start": {"x": 100, "y": 100}, "end": {"x": 100, "y": 250}, "netName": "NetA", "layer": 1, "length": 150},
+            {"start": {"x": 100, "y": 250}, "end": {"x": 100, "y": 300}, "netName": "NetA", "layer": 1, "length": 50},
+            # A track on layer 2 connecting to where a via might end up
+            {"start": {"x": 300, "y": 300}, "end": {"x": 500, "y": 500}, "netName": "NetA", "layer": 2, "length": 282.8}
+        ],
+        "vias": [
+            {"location": {"x": 100, "y": 250}, "netName": "NetA", "fromLayer": 1, "toLayer": 2, "holeSize": 20},
+             # Add another via to connect the track on layer 2 to U1.2
+            {"location": {"x": 300, "y": 300}, "netName": "NetA", "fromLayer": 1, "toLayer": 2, "holeSize": 20}
+        ],
+        "arcs": []
+    }
+
+    # 2. Create an instance of PCBTraceExtractor
+    print("Creating PCBTraceExtractor with sample data...")
+    extractor = PCBTraceExtractor(pcb_data=sample_pcb_data)
+
+    # 3. Choose a net to visualize
+    net_to_visualize = "NetA"
+    output_html_file = f"{net_to_visualize}_3d_visualization.html"
+
+    print(f"Visualizing net: {net_to_visualize} in 3D...")
+    # 4. Call the visualize_net_3d method
+    # Pass auto_show=True if you want the __main__ block to open the browser when no file path is given.
+    # For just saving to file, auto_show=False (default) is fine.
+    fig = extractor.visualize_net_3d(net_name=net_to_visualize, output_file_path=output_html_file, auto_show=False)
+
+    if fig:
+        print(f"Successfully generated 3D visualization for {net_to_visualize}.")
+        print(f"Output saved to: {output_html_file}")
+    else:
+        print(f"Failed to generate 3D visualization for {net_to_visualize}.")
+
+    # You can also try the 2D visualization for comparison
+    # output_png_file = f"{net_to_visualize}_2d_visualization.png"
+    # print(f"Visualizing net: {net_to_visualize} in 2D...")
+    # fig_2d = extractor.visualize_net(net_name=net_to_visualize, output_path=output_png_file)
+    # if fig_2d:
+    #     print(f"Successfully generated 2D visualization for {net_to_visualize}.")
+    #     print(f"Output saved to: {output_png_file}")
+    # else:
+    #     print(f"Failed to generate 2D visualization for {net_to_visualize}.")

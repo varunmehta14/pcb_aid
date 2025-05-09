@@ -22,6 +22,7 @@ import AIChat from '../components/AIChat'
 import PCBVisualizer from '../components/PCBVisualizer'
 import TraceInspector from '../components/TraceInspector'
 import CriticalPathAnalysis from '../components/CriticalPathAnalysis'
+import NetVisualization3D from '../components/NetVisualization3D'
 
 const DashboardPage = () => {
   const { boardId } = useParams<{ boardId: string }>()
@@ -114,6 +115,7 @@ const DashboardPage = () => {
               <Tabs isLazy>
                 <TabList>
                   <Tab>Visualization</Tab>
+                  <Tab>3D Net Visualization</Tab>
                   <Tab>Trace Inspector</Tab>
                   <Tab>Critical Path Analysis</Tab>
                   <Tab>AI Assistant</Tab>
@@ -130,6 +132,20 @@ const DashboardPage = () => {
                         />
                       ) : (
                         <Text>Please select a board and net to visualize</Text>
+                      )}
+                    </Box>
+                  </TabPanel>
+
+                  {/* 3D Net Visualization Tab */}
+                  <TabPanel>
+                    <Box minH="500px">
+                      {boardId && selectedNet ? (
+                        <NetVisualization3D 
+                          boardId={boardId} 
+                          selectedNet={selectedNet} 
+                        />
+                      ) : (
+                        <Text>Please select a board and net for 3D visualization</Text>
                       )}
                     </Box>
                   </TabPanel>
